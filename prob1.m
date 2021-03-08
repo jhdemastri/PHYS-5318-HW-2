@@ -1,6 +1,6 @@
 %Author: John DeMastri
 %Date: 3/9/2021
-%For: PHYS 5318 HW #2
+%For: PHYS 5318 HW #2 Question 1
 
 clear; close all; clc;
 %% Setup
