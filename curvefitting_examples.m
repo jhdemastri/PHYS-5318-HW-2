@@ -194,8 +194,7 @@ dA = (dAmax - dAmin)/2;    db = (dbmax - dbmin)/2;
  
 %% OLS and WLS via matrix methods
  
-% If data is not linear, linearize it!
-% NOTE that this will not work for the sine example... 
+% linearize the data using 
 x_lin = x;
 y_lin = yavg; 
  
