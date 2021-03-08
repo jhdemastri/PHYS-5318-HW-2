@@ -2,7 +2,7 @@
 %Date: 3/9/2021
 %For: PHYS 5318 HW #2
 
-clear; close all;
+clear; close all; clc;
 %% Setup
 %Let's instantiate the data
 rawdata = readtable("problem1data.txt");
@@ -135,21 +135,22 @@ db_wls = sigma_p(2);
 Rsq_wls = 1 - sum((y_lin - fit(p_wls, x)).^2)/sum((y_lin - mean(y_lin)).^2);
 
 %% Plot and Output
-figure('Renderer', 'painters', 'Position', [10 10 900 600])
-errorbar(condata.x, condata.ymean, condata.yse, 'x');
+%make sure we have an appropriately size
+figure('Renderer', 'painters', 'Position', [400 300 900 600])
+
+%plot everything on a logscale
+errorbar(log(condata.x), log(condata.ymean), log(condata.yse), 'x');
 hold on
-plot(x, fit(pmin, x), 'k');
-plot(x, fit(p_ols, x), '--k');
-plot(x, fit(p_wls, x), '-.k');
+plot(log(x), log(fit(pmin, x)), 'k');
+plot(log(x), log(fit(p_ols, x)), '--k');
+plot(log(x), log(fit(p_wls, x)), '-.k');
 hold off
-xlim([0 2.1]);
-xticks(0:.1:2.1);
-ylim([0 45]);
 
+%labels, legends, and annotations
+xlabel('Domain');
+ylabel('Range');
+title('Toy Model Fit To Dummy Data On a Log Scale');
 
-%temporarily set dA = 1 and db = 1
-%dA = 1;
-%db = 1;
 str_chi2 = sprintf(['\\chi^2 Fit Params:\n' ...
                'A = %3.2f \\pm %3.2f \n' ...
                'p = %3.2f \\pm %3.2f \n' ...
@@ -172,6 +173,7 @@ a = gca; % get the current axis;
 % set the width of the axis (the third value in Position) 
 % to be 60% of the Figure's width
 a.Position(3) = 0.7;            
-annotation('textbox', [.84, .825, .1,.1], 'String',  str_chi2); 
-annotation('textbox', [.84, .525, .1,.1], 'String',  str_ols);
+annotation('textbox', [.84, .75, .1,.1], 'String',  str_chi2); 
+annotation('textbox', [.84, .425, .1,.1], 'String',  str_ols);
 annotation('textbox', [.84, .225, .1,.1], 'String',  str_wls);
+set(gcf, 'Name', 'Problem 1 by John DeMastri', 'NumberTitle', 'Off')
