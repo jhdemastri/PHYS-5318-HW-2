@@ -18,7 +18,7 @@ b    = 2;        % Free parameter #2
 x = rawdata.x;
 
 %some constants we know from the data
-pts  = 14;       % Data points 
+pts  = 15;       % Data points 
 dof  = pts - 2;  % Degrees of freedom of the model (Assume 2 fit params)
 Nrep = 10;       % Number of measurements (need at least 2)
 
@@ -81,10 +81,9 @@ dbmin = min(brange(idxb)); dbmax = max(brange(idxb));
 dA = (dAmax - dAmin)/2;    db = (dbmax - dbmin)/2;
 
 %% OLS and WLS
-% If data is not linear, linearize it!
-% NOTE that this will not work for the sine example... 
-x_lin = log(x);
-y_lin = log(ymean); 
+% linearize the data, in this case we square x
+x_lin = x.^2;
+y_lin = ymean; 
  
 % OLS
  
