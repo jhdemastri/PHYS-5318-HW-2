@@ -126,11 +126,11 @@ b_wls = p_wls(2);
 
 %error on the coefficients
 sigma_p = sqrt(diag(cov));
-dA_wls = A_wls*sigma_p(1)
-db_wls = sigma_p(2)
+dA_wls = A_wls*sigma_p(1);
+db_wls = sigma_p(2);
 
 %parameters, corrected for linearization
-p_wls = [A_wls b_wls]
+p_wls = [A_wls b_wls];
  
 % Goodness of fit
 wls_fit = fit(p_wls, x);
