@@ -81,92 +81,95 @@ dbmin = min(brange(idxb)); dbmax = max(brange(idxb));
 dA = (dAmax - dAmin)/2;    db = (dbmax - dbmin)/2;
 
 %% OLS and WLS
-% linearize the data, in this case we square x
-x_lin = x.^2;
-y_lin = ymean; 
+% linearize the data, in this case we log everything
+x_lin = log(x);
+y_lin = log(ymean); 
  
 % OLS
+
+x_ols = [(x_lin.^0) (x_lin.^1)];
+y_ols = y_lin;
  
-% Construct x matrix with one column for each parameter in the model.
-% Each column is scaled to the order of the polynomial of x. For a linear
-% equation, the first column is x^1 (just x), and second column is x^0,
-% which is a vector of ones. This method works for n-degree polynomial fits
+% param ols = (X'*X)^(-1) * X' * Y;
+p_ols = inv(x_ols' * x_ols) * x_ols' * y_ols;
  
-x_ols = [x_lin, ones(length(x_lin), 1)];
- 
-% Matrix version: (X'*X)^(-1) * X' * Y
-% p_ols = inv(x_ols' * x_ols) * x_ols' * yavg;
- 
-% But wait! Matlab has a convenient shorthand for this calculation 
-% using the backslash '\' operator:
-p_ols = x_ols \ y_lin;
- 
-% OLS coefficients
-A_ols = p_ols(1);
+% OLS coefficients, corrected for the linearization
+A_ols = exp(p_ols(1));
 b_ols = p_ols(2);
- 
+
+p_ols = [A_ols b_ols];
+
 % Goodness of fit
-Rsq_ols = 1 - sum((y_lin - fit(p_ols, x)).^2)/sum((y_lin - mean(y_lin)).^2);
+ols_fit = fit(p_ols, x);
+Rsq_ols = 1 - sum((ymean - ols_fit).^2)/sum((ymean- ones(length(ymean),1)*mean(ymean)).^2);
  
  
 % WLS
- 
+
+%correct the uncertainty for the linearization
+yse_lin = (yse./ymean).^2;
+
 % x and y get weighted by their uncertainty
-x_wls = x_ols ./ yse;
-y_wls = y_lin ./ yse;
- 
-% Compute coeficients (same as OLS method)
-p_wls = x_wls \ y_wls;
+x_wls = x_ols ./ yse_lin;
+y_wls = y_lin ./ yse_lin;
  
 % Covaraince matrix
 cov = inv(x_wls'*x_wls);
 
-% Individual coefficients
-A_wls = p_wls(1);
+% Compute coeficients (same as OLS method)
+p_wls = cov * x_wls' * y_wls;
+
+
+% Individual coefficients, corrected for linearization
+A_wls = exp(p_wls(1));
 b_wls = p_wls(2);
- 
-% The uncertainties in each parameter lie on the diagonal of the covariance
-% matrix
+
+%error on the coefficients
 sigma_p = sqrt(diag(cov));
-dA_wls = sigma_p(1);
-db_wls = sigma_p(2);
+dA_wls = A_wls*sigma_p(1)
+db_wls = sigma_p(2)
+
+%parameters, corrected for linearization
+p_wls = [A_wls b_wls]
  
 % Goodness of fit
-Rsq_wls = 1 - sum((y_lin - fit(p_wls, x)).^2)/sum((y_lin - mean(y_lin)).^2);
+wls_fit = fit(p_wls, x);
+Rsq_wls = 1 - sum((ymean - wls_fit).^2)/sum((ymean - ones(length(ymean),1)*mean(ymean)).^2);
 
 %% Plot and Output
-%make sure we have an appropriately size
+%make sure we have an appropriately sized figure
 figure('Renderer', 'painters', 'Position', [400 300 900 600])
 
 %plot everything on a logscale
-errorbar(log(condata.x), log(condata.ymean), log(condata.yse), 'x');
+errorbar(condata.x, condata.ymean, condata.yse, 'x');
 hold on
-plot(log(x), log(fit(pmin, x)), 'k');
-plot(log(x), log(fit(p_ols, x)), '--k');
-plot(log(x), log(fit(p_wls, x)), '-.k');
+plot(x, fit(pmin, x), 'k');
+plot(x, fit(p_ols, x), '--k');
+plot(x, fit(p_wls, x), '-.k');
 hold off
+set(gca, 'XScale', 'log', 'YScale', 'log')
 
 %labels, legends, and annotations
 xlabel('Domain');
 ylabel('Range');
 title('Toy Model Fit To Dummy Data On a Log Scale');
 
-str_chi2 = sprintf(['\\chi^2 Fit Params:\n' ...
-               'A = %3.2f \\pm %3.2f \n' ...
-               'p = %3.2f \\pm %3.2f \n' ...
-               'R^2 = %4.3f \n' ...
+str_chi2 = sprintf(['\\chi^2 Fit Params:\n'...
+               'A = %3.2f \\pm %3.3f \n' ...
+               'p = %3.2f \\pm %3.3f \n' ...
+               'R^2 = %4.4f \n' ...
                '\\chi^2_{min} = %4.3f \n' ...
                '\\chi^2_{red} = %4.3f \n'], pmin(1), dA, pmin(2),...
                 db, Rsq_chi2, minchisq, redchisq);
             
 str_ols = sprintf(['OLS Fit Params: \n' ...
                'A = %3.2f, p = %3.2f \n' ...
-               'R^2 = %4.3f \n'], A_ols, b_ols, Rsq_ols);
+               'R^2 = %4.4f \n'], A_ols, b_ols, Rsq_ols);
            
 str_wls = sprintf(['WLS Fit Params: \n' ...
-               'A = %3.2f \\pm %3.2f \n' ...
-               'p = %3.2f \\pm %3.2f \n' ...
-               'R^2 = %4.3f \n'], A_wls, dA_wls, b_ols, db_wls, Rsq_ols);
+               'A = %3.2f \\pm %3.3f \n' ...
+               'p = %3.2f \\pm %3.3f \n' ...
+               'R^2 = %4.4f \n'], A_wls, dA_wls, b_ols, db_wls, Rsq_wls);
 legend('Data', sprintf('\\chi^2_{min}'), 'ols', 'wls', 'Location','Northwest');
 
 a = gca; % get the current axis;
